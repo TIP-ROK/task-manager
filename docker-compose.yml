@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  postgres_data:
+    image: postgres:13
+    container_name: postgres_data
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env
+    restart: on-failure
+
+  web:
+    build: .
+    ports:
+      - '8880:8880'
+    command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8880"
+    volumes:
+      - .:/usr/src/app
+    env_file:
+      - .env
+    depends_on:
+      - postgres_data
+    restart: on-failure
