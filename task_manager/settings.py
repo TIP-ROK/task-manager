@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 import os
 from pathlib import Path
+
 from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -24,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = config('DEBUG')
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS').split(',')
 
@@ -40,6 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
+    'drf_yasg',
+    'auth_app',
 ]
 
 MIDDLEWARE = [
@@ -50,6 +53,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'auth_app.middleware.LogIPMiddleware'
 ]
 
 ROOT_URLCONF = 'task_manager.urls'
@@ -134,6 +138,8 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+AUTH_USER_MODEL = 'auth_app.User'
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
@@ -150,3 +156,45 @@ EMAIL_PORT = config('EMAIL_PORT').split(',')[0]
 EMAIL_USE_TLS = config('EMAIL_USE_TLS').split(',')[0]
 EMAIL_HOST_USER = config('EMAIL_HOST_USER').split(',')[0]
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD').split(',')[0]
+
+
+# Путь к файлу для логов
+LOGGING_FILE_PATH = os.path.join(BASE_DIR, 'logs/django_IP.log')
+
+# Создание директории для логов, если она не существует
+os.makedirs(os.path.dirname(LOGGING_FILE_PATH), exist_ok=True)
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{asctime} {levelname} {module} {message}',
+            'style': '{',
+        },
+        'simple': {
+            'format': '{levelname} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'DEBUG',  # Уровень логирования
+            'class': 'logging.FileHandler',  # Обработчик для записи в файл
+            'filename': LOGGING_FILE_PATH,
+            'formatter': 'verbose',  # Использовать формат verbose
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': ['file'],
+            'level': 'DEBUG',  # Записывать все логи уровня DEBUG и выше
+            'propagate': True,
+        },
+        'django.request': {  # Логи запросов
+            'handlers': ['file'],
+            'level': 'ERROR',  # Записывать только ошибки запросов
+            'propagate': False,
+        },
+    },
+}

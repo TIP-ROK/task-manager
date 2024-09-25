@@ -1,7 +1,7 @@
 version: '3.8'
 
 services:
-  postgres_data:
+  db:
     image: postgres:13
     container_name: postgres_data
     ports:
@@ -22,5 +22,10 @@ services:
     env_file:
       - .env
     depends_on:
-      - postgres_data
+      - db
     restart: on-failure
+
+networks:
+  default:
+    name: external-tasks
+    external: true
