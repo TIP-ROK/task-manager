@@ -140,26 +140,6 @@ class ConfirmEmailView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def get(self, request):
-        serializer = ConfirmCodeSerializer(data=request.data)
-        if serializer.is_valid():
-            user = User.objects.get(username=serializer.validated_data['username'])
-            user.is_active = True
-            user.save()
-            confirm_code = ConfirmationCode.objects.get(user=user, code=serializer.validated_data['confirmation_code'])
-            confirm_code.sent_at = now()
-            confirm_code.save()
-
-            # Генерация JWT токенов
-            refresh = RefreshToken.for_user(user)
-            print(refresh)
-            print(refresh.access_token)
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-            }, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 
 class ResendConfirmationEmailView(APIView):
     permission_classes = [AllowAny]
